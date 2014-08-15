@@ -76,6 +76,15 @@ static void printMatrix(int **pMaster, int iSize) {
 	}
 }
 
+/* Print Distance Record */
+static void printDistRecord(int *iDistRecord, int iArraySize) {
+	int i;
+
+	for (i = 0; i < iArraySize; i++) {
+		printf("%d : %d\n", i, iDistRecord[i]);
+	}
+}
+
 /* Set all values of iDistRecord to -1 */
 static void clearRecord(int *iDistRecord, int iArraySize) {
 	int i;
@@ -93,10 +102,9 @@ static int isUnexplored(int *iDistRecord, int iNode) {
 }
 
 /* Return the node with smallest score from iXNode */
-static int grabSmallestScore(int **pMaster, int iXNode, int iArraySize, int *iDistRecord) {
+static int grabSmallestScore(int **pMaster, int iXNode, int iArraySize, int *iDistRecord, int *iTestNextNode) {
 	int *pRow;
 	int iMinVal = 9999;
-	int iMinIndex = -1;
 	int i;
 
 	pRow = pMaster[iXNode];
@@ -104,11 +112,11 @@ static int grabSmallestScore(int **pMaster, int iXNode, int iArraySize, int *iDi
 	for (i = 0; i < iArraySize; i++) {
 		if ((pRow[i] != 0) && (iMinVal > pRow[i]) && (isUnexplored(iDistRecord, i))) {
 			iMinVal = pRow[i];
-			iMinIndex = i;
+			*iTestNextNode = i;
 		}
 	}
-	printf("%s", pRow[iMinIndex]);
-	return pRow[iMinIndex];
+
+	return iMinVal;
 }
 
 /* Returns next node to add to X */
@@ -117,35 +125,52 @@ static int grabNextNode(int **pMaster, int *iDistRecord, int iArraySize) {
 	int iMinNode = -1;
 	int iMinScore = 9999;
 	int iNodeScore;
+	int iNextNode;
+	int iTestNextNode;
 
 	for (i = 0; i < iArraySize; i++) {
 
 		if (!isUnexplored(iDistRecord, i)) {
 
-			iNodeScore = grabSmallestScore(pMaster, iDistRecord[i], iArraySize, iDistRecord);
+			iNodeScore = grabSmallestScore(pMaster, i, iArraySize, iDistRecord, &iTestNextNode) + iDistRecord[i];
 			if (iMinScore > iNodeScore) {
 				iMinScore = iNodeScore;
 				iMinNode = i;
+				iNextNode = iTestNextNode;
 			}
 		}
 	}
 
-	return iMinNode;
+	/* iMinNode is the starting point of a vector pointing out of vector */
+
+
+	/* Add into iDistRecord and therefore mark as explored */
+	iDistRecord[iNextNode] = iNodeScore;
+
+	return iNextNode;
 
 }
 
 /* Main Dijkstra Function. Returns smallest distance. */
 static int runDijkstra(int **pMaster, int iEnd, int iArraySize) {
+
 	int *iDistRecord;
 
 	iDistRecord = (int *) calloc(iArraySize, 4);
 	clearRecord(iDistRecord, iArraySize);
 	iDistRecord[0] = 0;
 
+	/*printDistRecord(iDistRecord, iArraySize);*/
+	
 	while (1 == 1) {
 		if (grabNextNode(pMaster, iDistRecord, iArraySize) == iEnd)
 			break;
 	}
+
+	/*printDistRecord(iDistRecord, iArraySize);*/
+
+
+
 
 	iEnd = iDistRecord[iEnd];
 
@@ -153,7 +178,6 @@ static int runDijkstra(int **pMaster, int iEnd, int iArraySize) {
 	free(iDistRecord);
 
 	return iEnd;
-
 
 }
 
@@ -166,17 +190,17 @@ static int runDijkstra(int **pMaster, int iEnd, int iArraySize) {
 	int iResult;
 
 
-
 	pMaster = setupMatrix(argv[1], &iArraySize);
 
 
 
-	iResult = runDijkstra(pMaster, 3, iArraySize);
+	iResult = runDijkstra(pMaster, 2, iArraySize);
 	printf("%d", iResult);
 
  	
 
  	freeMatrix(pMaster, iArraySize);
+
 
 
  	return 0;
